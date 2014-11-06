@@ -6,6 +6,42 @@ import (
 	"syscall"
 )
 
+// NetAddrAF returns the syscall AF_* type for a given net.Addr
+// returns syscall.AF_UNSPEC if unknown
+func NetAddrAF(addr net.Addr) int {
+	switch addr := addr.(type) {
+	default:
+		return syscall.AF_UNSPEC
+
+	case *net.IPAddr:
+		return IPAF(addr.IP)
+
+	case *net.TCPAddr:
+		return IPAF(addr.IP)
+
+	case *net.UDPAddr:
+		return IPAF(addr.IP)
+
+	case *net.UnixAddr:
+		return syscall.AF_UNIX
+	}
+}
+
+// IPAF returns the syscall AF_* type for a given IP address
+// returns syscall.AF_UNSPEC if unknown
+func IPAF(ip net.IP) int {
+	switch {
+	default:
+		return syscall.AF_UNSPEC
+
+	case ip.To4() != nil:
+		return syscall.AF_INET
+
+	case ip.To16() != nil:
+		return syscall.AF_INET6
+	}
+}
+
 // NetAddrIPPROTO returns the syscall IPPROTO_* type for a given net.Addr
 // returns -1 if protocol unknown
 func NetAddrIPPROTO(addr net.Addr) int {
