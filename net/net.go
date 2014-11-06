@@ -6,6 +6,59 @@ import (
 	"syscall"
 )
 
+// NetAddrIPPROTO returns the syscall IPPROTO_* type for a given net.Addr
+// returns -1 if protocol unknown
+func NetAddrIPPROTO(addr net.Addr) int {
+	switch addr := addr.(type) {
+	default:
+		return -1
+
+	case *net.IPAddr:
+		switch {
+		default:
+			return syscall.IPPROTO_IP
+
+		case addr.IP.To4() != nil:
+			return syscall.IPPROTO_IPV4
+
+		case addr.IP.To16() != nil:
+			return syscall.IPPROTO_IPV6
+		}
+
+	case *net.TCPAddr:
+		return syscall.IPPROTO_TCP
+
+	case *net.UDPAddr:
+		return syscall.IPPROTO_UDP
+	}
+}
+
+// NetAddrSOCK returns the syscall SOCK_* type for a given net.Addr
+// returns 0 if type unknown
+func NetAddrSOCK(addr net.Addr) int {
+	switch addr := addr.(type) {
+	default:
+		return 0
+	case *net.IPAddr:
+		return syscall.SOCK_DGRAM
+	case *net.TCPAddr:
+		return syscall.SOCK_STREAM
+	case *net.UDPAddr:
+		return syscall.SOCK_DGRAM
+	case *net.UnixAddr:
+		switch addr.Net {
+		default:
+			return 0
+		case "unix":
+			return syscall.SOCK_STREAM
+		case "unixgram":
+			return syscall.SOCK_DGRAM
+		case "unixpacket":
+			return syscall.SOCK_SEQPACKET
+		}
+	}
+}
+
 // NetAddrToSockaddr converts a net.Addr to a syscall.Sockaddr.
 // Returns nil if the input is invalid or conversion is not possible.
 func NetAddrToSockaddr(addr net.Addr) syscall.Sockaddr {
