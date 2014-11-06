@@ -1,5 +1,5 @@
-// package sanet provides conversions between net.Addr and syscall.Sockaddr
-package sanet
+// package sockaddrnet provides conversions between net.Addr and syscall.Sockaddr
+package sockaddrnet
 
 import (
 	"net"
