@@ -63,11 +63,11 @@ func sockaddrToAny(sa syscall.Sockaddr) (*syscall.RawSockaddrAny, Socklen, error
 		}
 		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), sl, nil
 
-	case *syscall.SockaddrDatalink:
+	case *syscall.SockaddrLinklayer:
 		if sa.Ifindex < 0 || sa.Ifindex > 0x7fffffff {
 			return nil, 0, syscall.EINVAL
 		}
-		var raw syscall.RawSockaddrDatalink
+		var raw syscall.RawSockaddrLinklayer
 		raw.Family = syscall.AF_PACKET
 		raw.Protocol = sa.Protocol
 		raw.Ifindex = int32(sa.Ifindex)
