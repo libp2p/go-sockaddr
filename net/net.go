@@ -7,11 +7,11 @@ import (
 )
 
 // NetAddrAF returns the syscall AF_* type for a given net.Addr
-// returns syscall.AF_UNSPEC if unknown
+// returns AF_UNSPEC if unknown
 func NetAddrAF(addr net.Addr) int {
 	switch addr := addr.(type) {
 	default:
-		return syscall.AF_UNSPEC
+		return AF_UNSPEC
 
 	case *net.IPAddr:
 		return IPAF(addr.IP)
@@ -23,22 +23,22 @@ func NetAddrAF(addr net.Addr) int {
 		return IPAF(addr.IP)
 
 	case *net.UnixAddr:
-		return syscall.AF_UNIX
+		return AF_UNIX
 	}
 }
 
 // IPAF returns the syscall AF_* type for a given IP address
-// returns syscall.AF_UNSPEC if unknown
+// returns AF_UNSPEC if unknown
 func IPAF(ip net.IP) int {
 	switch {
 	default:
-		return syscall.AF_UNSPEC
+		return AF_UNSPEC
 
 	case ip.To4() != nil:
-		return syscall.AF_INET
+		return AF_INET
 
 	case ip.To16() != nil:
-		return syscall.AF_INET6
+		return AF_INET6
 	}
 }
 
@@ -52,20 +52,20 @@ func NetAddrIPPROTO(addr net.Addr) int {
 	case *net.IPAddr:
 		switch {
 		default:
-			return syscall.IPPROTO_IP
+			return IPPROTO_IP
 
 		case addr.IP.To4() != nil:
-			return syscall.IPPROTO_IPV4
+			return IPPROTO_IPV4
 
 		case addr.IP.To16() != nil:
-			return syscall.IPPROTO_IPV6
+			return IPPROTO_IPV6
 		}
 
 	case *net.TCPAddr:
-		return syscall.IPPROTO_TCP
+		return IPPROTO_TCP
 
 	case *net.UDPAddr:
-		return syscall.IPPROTO_UDP
+		return IPPROTO_UDP
 	}
 }
 
@@ -76,21 +76,21 @@ func NetAddrSOCK(addr net.Addr) int {
 	default:
 		return 0
 	case *net.IPAddr:
-		return syscall.SOCK_DGRAM
+		return SOCK_DGRAM
 	case *net.TCPAddr:
-		return syscall.SOCK_STREAM
+		return SOCK_STREAM
 	case *net.UDPAddr:
-		return syscall.SOCK_DGRAM
+		return SOCK_DGRAM
 	case *net.UnixAddr:
 		switch addr.Net {
 		default:
 			return 0
 		case "unix":
-			return syscall.SOCK_STREAM
+			return SOCK_STREAM
 		case "unixgram":
-			return syscall.SOCK_DGRAM
+			return SOCK_DGRAM
 		case "unixpacket":
-			return syscall.SOCK_SEQPACKET
+			return SOCK_SEQPACKET
 		}
 	}
 }
