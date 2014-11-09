@@ -1,6 +1,6 @@
-package sockaddr
-
 // +build darwin dragonfly freebsd netbsd openbsd
+
+package sockaddr
 
 import (
 	"syscall"

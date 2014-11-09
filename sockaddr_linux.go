@@ -1,4 +1,3 @@
-// sockaddr syscall extensions
 package sockaddr
 
 import (
