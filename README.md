@@ -1,6 +1,15 @@
 ## go-sockaddr - `{Raw,}Sockaddr` conversions
 
-This package extracts unexported code from `syscall`. The standard library should just export these. See https://groups.google.com/d/msg/golang-nuts/B-meiFfkmH0/-TxP1r6zvk8J
+See https://groups.google.com/d/msg/golang-nuts/B-meiFfkmH0/-TxP1r6zvk8J
+This package extracts unexported code from `syscall` to help in converting
+between:
+
+```Go
+syscall.Sockaddr
+syscall.RawSockaddrAny
+C.struct_sockaddr_any
+net.*Addr
+```
 
 Godoc:
 

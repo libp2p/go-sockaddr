@@ -2,107 +2,86 @@
 package sockaddr
 
 import (
-	"fmt"
 	"syscall"
 	"unsafe"
 )
 
-func (r *RawSockaddr) Update(s *syscall.Sockaddr) error {
-
-	si4, ok := (*s).(*syscall.SockaddrInet4)
-	if ok {
-		return r.UpdateInet4(si4)
+func sockaddrToAny(sa syscall.Sockaddr) (*syscall.RawSockaddrAny, Socklen, error) {
+	if sa == nil {
+		return nil, 0, syscall.EINVAL
 	}
 
-	si6, ok := (*s).(*syscall.SockaddrInet6)
-	if ok {
-		return r.UpdateInet6(si6)
-	}
+	switch sa := sa.(type) {
+	case *syscall.SockaddrInet4:
+		if sa.Port < 0 || sa.Port > 0xFFFF {
+			return nil, 0, syscall.EINVAL
+		}
+		var raw syscall.RawSockaddrInet4
+		raw.Len = syscall.SizeofSockaddrInet4
+		raw.Family = syscall.AF_INET
+		p := (*[2]byte)(unsafe.Pointer(&raw.Port))
+		p[0] = byte(sa.Port >> 8)
+		p[1] = byte(sa.Port)
+		for i := 0; i < len(sa.Addr); i++ {
+			raw.Addr[i] = sa.Addr[i]
+		}
+		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), Socklen(raw.Len), nil
 
-	su, ok := (*s).(*syscall.SockaddrUnix)
-	if ok {
-		return r.UpdateUnix(su)
-	}
+	case *syscall.SockaddrInet6:
+		if sa.Port < 0 || sa.Port > 0xFFFF {
+			return nil, 0, syscall.EINVAL
+		}
+		var raw syscall.RawSockaddrInet6
+		raw.Len = syscall.SizeofSockaddrInet6
+		raw.Family = syscall.AF_INET6
+		p := (*[2]byte)(unsafe.Pointer(&raw.Port))
+		p[0] = byte(sa.Port >> 8)
+		p[1] = byte(sa.Port)
+		raw.Scope_id = sa.ZoneId
+		for i := 0; i < len(sa.Addr); i++ {
+			raw.Addr[i] = sa.Addr[i]
+		}
+		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), Socklen(raw.Len), nil
 
-	sdl, ok := (*s).(*syscall.SockaddrDatalink)
-	if ok {
-		return r.UpdateDatalink(sdl)
-	}
+	case *syscall.SockaddrUnix:
+		name := sa.Name
+		n := len(name)
+		var raw syscall.RawSockaddrUnix
+		if n >= len(raw.Path) || n == 0 {
+			return nil, 0, syscall.EINVAL
+		}
+		raw.Len = byte(3 + n) // 2 for Family, Len; 1 for NUL
+		raw.Family = syscall.AF_UNIX
+		for i := 0; i < n; i++ {
+			raw.Path[i] = int8(name[i])
+		}
+		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), Socklen(raw.Len), nil
 
-	return fmt.Errorf("unknown sockaddr type")
+	case *syscall.SockaddrDatalink:
+		if sa.Index == 0 {
+			return nil, 0, syscall.EINVAL
+		}
+		var raw syscall.RawSockaddrDatalink
+		raw.Len = sa.Len
+		raw.Family = syscall.AF_LINK
+		raw.Index = sa.Index
+		raw.Type = sa.Type
+		raw.Nlen = sa.Nlen
+		raw.Alen = sa.Alen
+		raw.Slen = sa.Slen
+		for i := 0; i < len(raw.Data); i++ {
+			raw.Data[i] = sa.Data[i]
+		}
+		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), syscall.SizeofSockaddrDatalink, nil
+	}
+	return nil, 0, syscall.EAFNOSUPPORT
 }
 
-func (r *RawSockaddr) UpdateInet4(sa *syscall.SockaddrInet4) error {
-	if sa.Port < 0 || sa.Port > 0xFFFF {
-		return syscall.EINVAL
+func anyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
+	if rsa == nil {
+		return nil, syscall.EINVAL
 	}
-	raw := (*syscall.RawSockaddrInet4)(unsafe.Pointer(&r.Raw))
-	raw.Len = syscall.SizeofSockaddrInet4
-	raw.Family = syscall.AF_INET
-	p := (*[2]byte)(unsafe.Pointer(&raw.Port))
-	p[0] = byte(sa.Port >> 8)
-	p[1] = byte(sa.Port)
-	for i := 0; i < len(sa.Addr); i++ {
-		raw.Addr[i] = sa.Addr[i]
-	}
-	r.Len = Socklen(raw.Len)
-	return nil
-}
 
-func (r *RawSockaddr) UpdateInet6(sa *syscall.SockaddrInet6) error {
-	if sa.Port < 0 || sa.Port > 0xFFFF {
-		return syscall.EINVAL
-	}
-	raw := (*syscall.RawSockaddrInet6)(unsafe.Pointer(&r.Raw))
-	raw.Len = syscall.SizeofSockaddrInet6
-	raw.Family = syscall.AF_INET6
-	p := (*[2]byte)(unsafe.Pointer(&raw.Port))
-	p[0] = byte(sa.Port >> 8)
-	p[1] = byte(sa.Port)
-	raw.Scope_id = sa.ZoneId
-	for i := 0; i < len(sa.Addr); i++ {
-		raw.Addr[i] = sa.Addr[i]
-	}
-	r.Len = Socklen(raw.Len)
-	return nil
-}
-
-func (r *RawSockaddr) UpdateUnix(sa *syscall.SockaddrUnix) error {
-	raw := (*syscall.RawSockaddrUnix)(unsafe.Pointer(&r.Raw))
-	name := sa.Name
-	n := len(name)
-	if n >= len(raw.Path) || n == 0 {
-		return syscall.EINVAL
-	}
-	raw.Len = byte(3 + n) // 2 for Family, Len; 1 for NUL
-	raw.Family = syscall.AF_UNIX
-	for i := 0; i < n; i++ {
-		raw.Path[i] = int8(name[i])
-	}
-	r.Len = Socklen(raw.Len)
-	return nil
-}
-
-func (r *RawSockaddr) UpdateDatalink(sa *syscall.SockaddrDatalink) error {
-	if sa.Index == 0 {
-		return syscall.EINVAL
-	}
-	raw := (*syscall.RawSockaddrDatalink)(unsafe.Pointer(&r.Raw))
-	raw.Len = sa.Len
-	raw.Family = syscall.AF_LINK
-	raw.Index = sa.Index
-	raw.Type = sa.Type
-	raw.Nlen = sa.Nlen
-	raw.Alen = sa.Alen
-	raw.Slen = sa.Slen
-	for i := 0; i < len(raw.Data); i++ {
-		raw.Data[i] = sa.Data[i]
-	}
-	r.Len = Socklen(syscall.SizeofSockaddrDatalink)
-	return nil
-}
-
-func AnyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case syscall.AF_LINK:
 		pp := (*syscall.RawSockaddrDatalink)(unsafe.Pointer(rsa))
