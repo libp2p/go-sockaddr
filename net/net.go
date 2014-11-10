@@ -117,8 +117,9 @@ func NetAddrToSockaddr(addr net.Addr) syscall.Sockaddr {
 // Returns nil if conversion fails.
 func IPAndZoneToSockaddr(ip net.IP, zone string) syscall.Sockaddr {
 	switch {
-	default:
-		return nil
+	case len(ip) < net.IPv4len: // default to IPv4
+		buf := [4]byte{0, 0, 0, 0}
+		return &syscall.SockaddrInet4{Addr: buf}
 
 	case ip.To4() != nil:
 		var buf [4]byte
@@ -130,6 +131,7 @@ func IPAndZoneToSockaddr(ip net.IP, zone string) syscall.Sockaddr {
 		copy(buf[:], ip)
 		return &syscall.SockaddrInet6{Addr: buf, ZoneId: uint32(IP6ZoneToInt(zone))}
 	}
+	panic("should be unreachable")
 }
 
 // IPAddrToSockaddr converts a net.IPAddr to a syscall.Sockaddr.
@@ -142,10 +144,6 @@ func IPAddrToSockaddr(addr *net.IPAddr) syscall.Sockaddr {
 // Returns nil if conversion fails.
 func TCPAddrToSockaddr(addr *net.TCPAddr) syscall.Sockaddr {
 	sa := IPAndZoneToSockaddr(addr.IP, addr.Zone)
-	if sa == nil {
-		return sa
-	}
-
 	switch sa := sa.(type) {
 	default:
 		return nil
@@ -162,10 +160,6 @@ func TCPAddrToSockaddr(addr *net.TCPAddr) syscall.Sockaddr {
 // Returns nil if conversion fails.
 func UDPAddrToSockaddr(addr *net.UDPAddr) syscall.Sockaddr {
 	sa := IPAndZoneToSockaddr(addr.IP, addr.Zone)
-	if sa == nil {
-		return sa
-	}
-
 	switch sa := sa.(type) {
 	default:
 		return nil
@@ -194,6 +188,62 @@ func UnixAddrToSockaddr(addr *net.UnixAddr) (syscall.Sockaddr, int) {
 		t = syscall.SOCK_SEQPACKET
 	}
 	return &syscall.SockaddrUnix{Name: addr.Name}, t
+}
+
+// IPAndZoneToSockaddr converts a net.IP (with optional IPv6 Zone) to a syscall.Sockaddr
+// Returns nil if conversion fails.
+func SockaddrToIPAndZone(sa syscall.Sockaddr) (net.IP, string) {
+	switch sa := sa.(type) {
+	case *syscall.SockaddrInet4:
+		var ip net.IP
+		copy(ip[12:16], sa.Addr[:])
+		return ip, ""
+
+	case *syscall.SockaddrInet6:
+		var ip net.IP
+		copy(ip, sa.Addr[:])
+		return ip, IP6ZoneToString(int(sa.ZoneId))
+	}
+	return nil, ""
+}
+
+// SockaddrToIPAddr converts a syscall.Sockaddr to a net.IPAddr
+// Returns nil if conversion fails.
+func SockaddrToIPAddr(sa syscall.Sockaddr) *net.IPAddr {
+	ip, zone := SockaddrToIPAndZone(sa)
+	switch sa.(type) {
+	case *syscall.SockaddrInet4:
+		return &net.IPAddr{IP: ip}
+	case *syscall.SockaddrInet6:
+		return &net.IPAddr{IP: ip, Zone: zone}
+	}
+	return nil
+}
+
+// SockaddrToTCPAddr converts a syscall.Sockaddr to a net.TCPAddr
+// Returns nil if conversion fails.
+func SockaddrToTCPAddr(sa syscall.Sockaddr) *net.TCPAddr {
+	ip, zone := SockaddrToIPAndZone(sa)
+	switch sa := sa.(type) {
+	case *syscall.SockaddrInet4:
+		return &net.TCPAddr{IP: ip, Port: sa.Port}
+	case *syscall.SockaddrInet6:
+		return &net.TCPAddr{IP: ip, Port: sa.Port, Zone: zone}
+	}
+	return nil
+}
+
+// SockaddrToUDPAddr converts a syscall.Sockaddr to a net.UDPAddr
+// Returns nil if conversion fails.
+func SockaddrToUDPAddr(sa syscall.Sockaddr) *net.UDPAddr {
+	ip, zone := SockaddrToIPAndZone(sa)
+	switch sa := sa.(type) {
+	case *syscall.SockaddrInet4:
+		return &net.UDPAddr{IP: ip, Port: sa.Port}
+	case *syscall.SockaddrInet6:
+		return &net.UDPAddr{IP: ip, Port: sa.Port, Zone: zone}
+	}
+	return nil
 }
 
 // from: go/src/pkg/net/unixsock_posix.go
