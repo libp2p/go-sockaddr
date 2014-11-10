@@ -195,12 +195,12 @@ func UnixAddrToSockaddr(addr *net.UnixAddr) (syscall.Sockaddr, int) {
 func SockaddrToIPAndZone(sa syscall.Sockaddr) (net.IP, string) {
 	switch sa := sa.(type) {
 	case *syscall.SockaddrInet4:
-		var ip net.IP
+		ip := make([]byte, 16)
 		copy(ip[12:16], sa.Addr[:])
 		return ip, ""
 
 	case *syscall.SockaddrInet6:
-		var ip net.IP
+		ip := make([]byte, 16)
 		copy(ip, sa.Addr[:])
 		return ip, IP6ZoneToString(int(sa.ZoneId))
 	}
