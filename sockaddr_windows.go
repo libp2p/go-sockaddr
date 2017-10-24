@@ -1,36 +1,36 @@
 package sockaddr
 
 import (
-	"syscall"
+	"golang.org/x/sys/unix"
 	"unsafe"
 )
 
-func sockaddrToAny(sa syscall.Sockaddr) (*syscall.RawSockaddrAny, Socklen, error) {
+func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 	if sa == nil {
-		return nil, 0, syscall.EINVAL
+		return nil, 0, unix.EINVAL
 	}
 
 	switch sa := sa.(type) {
-	case *syscall.SockaddrInet4:
+	case *unix.SockaddrInet4:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, syscall.EINVAL
+			return nil, 0, unix.EINVAL
 		}
-		var raw syscall.RawSockaddrInet4
-		raw.Family = syscall.AF_INET
+		var raw unix.RawSockaddrInet4
+		raw.Family = unix.AF_INET
 		p := (*[2]byte)(unsafe.Pointer(&raw.Port))
 		p[0] = byte(sa.Port >> 8)
 		p[1] = byte(sa.Port)
 		for i := 0; i < len(sa.Addr); i++ {
 			raw.Addr[i] = sa.Addr[i]
 		}
-		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
+		return (*unix.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
 
-	case *syscall.SockaddrInet6:
+	case *unix.SockaddrInet6:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, syscall.EINVAL
+			return nil, 0, unix.EINVAL
 		}
-		var raw syscall.RawSockaddrInet6
-		raw.Family = syscall.AF_INET6
+		var raw unix.RawSockaddrInet6
+		raw.Family = unix.AF_INET6
 		p := (*[2]byte)(unsafe.Pointer(&raw.Port))
 		p[0] = byte(sa.Port >> 8)
 		p[1] = byte(sa.Port)
@@ -38,26 +38,26 @@ func sockaddrToAny(sa syscall.Sockaddr) (*syscall.RawSockaddrAny, Socklen, error
 		for i := 0; i < len(sa.Addr); i++ {
 			raw.Addr[i] = sa.Addr[i]
 		}
-		return (*syscall.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
+		return (*unix.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
 
-	case *syscall.SockaddrUnix:
-		return nil, 0, syscall.EWINDOWS
+	case *unix.SockaddrUnix:
+		return nil, 0, unix.EWINDOWS
 	}
-	return nil, 0, syscall.EAFNOSUPPORT
+	return nil, 0, unix.EAFNOSUPPORT
 }
 
-func anyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
+func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 	if rsa == nil {
-		return nil, 0, syscall.EINVAL
+		return nil, 0, unix.EINVAL
 	}
 
 	switch rsa.Addr.Family {
-	case syscall.AF_UNIX:
-		return nil, syscall.EWINDOWS
+	case unix.AF_UNIX:
+		return nil, unix.EWINDOWS
 
-	case syscall.AF_INET:
-		pp := (*syscall.RawSockaddrInet4)(unsafe.Pointer(rsa))
-		sa := new(syscall.SockaddrInet4)
+	case unix.AF_INET:
+		pp := (*unix.RawSockaddrInet4)(unsafe.Pointer(rsa))
+		sa := new(unix.SockaddrInet4)
 		p := (*[2]byte)(unsafe.Pointer(&pp.Port))
 		sa.Port = int(p[0])<<8 + int(p[1])
 		for i := 0; i < len(sa.Addr); i++ {
@@ -65,9 +65,9 @@ func anyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
 		}
 		return sa, nil
 
-	case syscall.AF_INET6:
-		pp := (*syscall.RawSockaddrInet6)(unsafe.Pointer(rsa))
-		sa := new(syscall.SockaddrInet6)
+	case unix.AF_INET6:
+		pp := (*unix.RawSockaddrInet6)(unsafe.Pointer(rsa))
+		sa := new(unix.SockaddrInet6)
 		p := (*[2]byte)(unsafe.Pointer(&pp.Port))
 		sa.Port = int(p[0])<<8 + int(p[1])
 		sa.ZoneId = pp.Scope_id
@@ -76,5 +76,5 @@ func anyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
 		}
 		return sa, nil
 	}
-	return nil, syscall.EAFNOSUPPORT
+	return nil, unix.EAFNOSUPPORT
 }
