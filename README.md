@@ -13,5 +13,5 @@ net.*Addr
 
 Godoc:
 
-- sockaddr - http://godoc.org/github.com/jbenet/go-sockaddr
-- sockaddr/net - http://godoc.org/github.com/jbenet/go-sockaddr/net
+- sockaddr - http://godoc.org/github.com/libp2p/go-sockaddr
+- sockaddr/net - http://godoc.org/github.com/libp2p/go-sockaddr/net
