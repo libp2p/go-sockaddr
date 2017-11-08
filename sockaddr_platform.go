@@ -1,35 +1,35 @@
 package sockaddr
 
 // import (
-//   "syscall"
+//   "unix"
 //   "unsafe"
 // )
 
-// func sockaddrToAny(sa syscall.Sockaddr) (*syscall.RawSockaddrAny, Socklen, error) {
+// func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 //   if sa == nil {
-//     return nil, 0, syscall.EINVAL
+//     return nil, 0, unix.EINVAL
 //   }
 
 //   switch sa.(type) {
-//   case *syscall.SockaddrInet4:
-//   case *syscall.SockaddrInet6:
-//   case *syscall.SockaddrUnix:
-//   case *syscall.SockaddrDatalink:
+//   case *unix.SockaddrInet4:
+//   case *unix.SockaddrInet6:
+//   case *unix.SockaddrUnix:
+//   case *unix.SockaddrDatalink:
 //   }
-//   return nil, 0, syscall.EAFNOSUPPORT
+//   return nil, 0, unix.EAFNOSUPPORT
 // }
 
-// func anyToSockaddr(rsa *syscall.RawSockaddrAny) (syscall.Sockaddr, error) {
+// func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 //   if rsa == nil {
-//     return nil, 0, syscall.EINVAL
+//     return nil, 0, unix.EINVAL
 //   }
 
 //   switch rsa.Addr.Family {
-//   case syscall.AF_NETLINK:
-//   case syscall.AF_PACKET:
-//   case syscall.AF_UNIX:
-//   case syscall.AF_INET:
-//   case syscall.AF_INET6:
+//   case unix.AF_NETLINK:
+//   case unix.AF_PACKET:
+//   case unix.AF_UNIX:
+//   case unix.AF_INET:
+//   case unix.AF_INET6:
 //   }
-//   return nil, syscall.EAFNOSUPPORT
+//   return nil, unix.EAFNOSUPPORT
 // }
