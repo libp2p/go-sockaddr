@@ -3,19 +3,21 @@
 package sockaddr
 
 import (
-	"golang.org/x/sys/unix"
+	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 	if sa == nil {
-		return nil, 0, unix.EINVAL
+		return nil, 0, syscall.EINVAL
 	}
 
 	switch sa := sa.(type) {
 	case *unix.SockaddrInet4:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrInet4
 		raw.Len = unix.SizeofSockaddrInet4
@@ -30,7 +32,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 
 	case *unix.SockaddrInet6:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrInet6
 		raw.Len = unix.SizeofSockaddrInet6
@@ -49,7 +51,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 		n := len(name)
 		var raw unix.RawSockaddrUnix
 		if n >= len(raw.Path) || n == 0 {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		raw.Len = byte(3 + n) // 2 for Family, Len; 1 for NUL
 		raw.Family = unix.AF_UNIX
@@ -60,7 +62,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 
 	case *unix.SockaddrDatalink:
 		if sa.Index == 0 {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrDatalink
 		raw.Len = sa.Len
@@ -75,12 +77,12 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 		}
 		return (*unix.RawSockaddrAny)(unsafe.Pointer(&raw)), unix.SizeofSockaddrDatalink, nil
 	}
-	return nil, 0, unix.EAFNOSUPPORT
+	return nil, 0, syscall.EAFNOSUPPORT
 }
 
 func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 	if rsa == nil {
-		return nil, unix.EINVAL
+		return nil, syscall.EINVAL
 	}
 
 	switch rsa.Addr.Family {
@@ -102,7 +104,7 @@ func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 	case unix.AF_UNIX:
 		pp := (*unix.RawSockaddrUnix)(unsafe.Pointer(rsa))
 		if pp.Len < 3 || pp.Len > unix.SizeofSockaddrUnix {
-			return nil, unix.EINVAL
+			return nil, syscall.EINVAL
 		}
 		sa := new(unix.SockaddrUnix)
 		n := int(pp.Len) - 3 // subtract leading Family, Len, terminating NUL
@@ -138,5 +140,5 @@ func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 		}
 		return sa, nil
 	}
-	return nil, unix.EAFNOSUPPORT
+	return nil, syscall.EAFNOSUPPORT
 }
