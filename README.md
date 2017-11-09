@@ -5,8 +5,8 @@ This package extracts unexported code from `golang.org/x/unix` to help in conver
 between:
 
 ```Go
-unix.Sockaddr
-unix.RawSockaddrAny
+${platform}.Sockaddr
+${platform}.RawSockaddrAny
 C.struct_sockaddr_any
 net.*Addr
 ```

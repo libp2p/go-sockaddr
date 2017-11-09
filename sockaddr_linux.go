@@ -1,19 +1,21 @@
 package sockaddr
 
 import (
-	"golang.org/x/sys/unix"
+	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 	if sa == nil {
-		return nil, 0, unix.EINVAL
+		return nil, 0, syscall.EINVAL
 	}
 
 	switch sa := sa.(type) {
 	case *unix.SockaddrInet4:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrInet4
 		raw.Family = unix.AF_INET
@@ -27,7 +29,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 
 	case *unix.SockaddrInet6:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrInet6
 		raw.Family = unix.AF_INET6
@@ -45,7 +47,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 		n := len(name)
 		var raw unix.RawSockaddrUnix
 		if n >= len(raw.Path) {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		raw.Family = unix.AF_UNIX
 		for i := 0; i < n; i++ {
@@ -65,7 +67,7 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 
 	case *unix.SockaddrLinklayer:
 		if sa.Ifindex < 0 || sa.Ifindex > 0x7fffffff {
-			return nil, 0, unix.EINVAL
+			return nil, 0, syscall.EINVAL
 		}
 		var raw unix.RawSockaddrLinklayer
 		raw.Family = unix.AF_PACKET
@@ -79,10 +81,14 @@ func sockaddrToAny(sa unix.Sockaddr) (*unix.RawSockaddrAny, Socklen, error) {
 		}
 		return (*unix.RawSockaddrAny)(unsafe.Pointer(&raw)), unix.SizeofSockaddrLinklayer, nil
 	}
-	return nil, 0, unix.EAFNOSUPPORT
+	return nil, 0, syscall.EAFNOSUPPORT
 }
 
 func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
+	if rsa == nil {
+		return nil, syscall.EINVAL
+	}
+
 	switch rsa.Addr.Family {
 	case unix.AF_NETLINK:
 		pp := (*unix.RawSockaddrNetlink)(unsafe.Pointer(rsa))
@@ -152,5 +158,5 @@ func anyToSockaddr(rsa *unix.RawSockaddrAny) (unix.Sockaddr, error) {
 		}
 		return sa, nil
 	}
-	return nil, unix.EAFNOSUPPORT
+	return nil, syscall.EAFNOSUPPORT
 }
