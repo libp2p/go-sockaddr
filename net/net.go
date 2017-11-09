@@ -195,6 +195,9 @@ func SockaddrToIPAndZone(sa Sockaddr) (net.IP, string) {
 	switch sa := sa.(type) {
 	case *SockaddrInet4:
 		ip := make([]byte, 16)
+		// V4InV6Prefix
+		ip[10] = 0xff
+		ip[11] = 0xff
 		copy(ip[12:16], sa.Addr[:])
 		return ip, ""
 
