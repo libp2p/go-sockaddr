@@ -17,6 +17,7 @@
   "language": "go",
   "license": "",
   "name": "go-sockaddr",
-  "version": "1.0.0"
+  "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
+  "version": "1.0.1"
 }
 
