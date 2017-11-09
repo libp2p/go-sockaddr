@@ -25,7 +25,7 @@ func sockaddrToAny(sa windows.Sockaddr) (*windows.RawSockaddrAny, Socklen, error
 		for i := 0; i < len(sa.Addr); i++ {
 			raw.Addr[i] = sa.Addr[i]
 		}
-		return (*windows.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
+		return (*windows.RawSockaddrAny)(unsafe.Pointer(&raw)), Socklen(unsafe.Sizeof(raw)), nil
 
 	case *windows.SockaddrInet6:
 		if sa.Port < 0 || sa.Port > 0xFFFF {
@@ -40,7 +40,7 @@ func sockaddrToAny(sa windows.Sockaddr) (*windows.RawSockaddrAny, Socklen, error
 		for i := 0; i < len(sa.Addr); i++ {
 			raw.Addr[i] = sa.Addr[i]
 		}
-		return (*windows.RawSockaddrAny)(unsafe.Pointer(&raw)), int32(unsafe.Sizeof(raw)), nil
+		return (*windows.RawSockaddrAny)(unsafe.Pointer(&raw)), Socklen(unsafe.Sizeof(raw)), nil
 
 	case *windows.SockaddrUnix:
 		return nil, 0, syscall.EWINDOWS
@@ -50,7 +50,7 @@ func sockaddrToAny(sa windows.Sockaddr) (*windows.RawSockaddrAny, Socklen, error
 
 func anyToSockaddr(rsa *windows.RawSockaddrAny) (windows.Sockaddr, error) {
 	if rsa == nil {
-		return nil, 0, syscall.EINVAL
+		return nil, syscall.EINVAL
 	}
 
 	switch rsa.Addr.Family {

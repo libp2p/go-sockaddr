@@ -11,7 +11,7 @@ const (
 	AF_UNSPEC = windows.AF_UNSPEC
 
 	IPPROTO_IP   = windows.IPPROTO_IP
-	IPPROTO_IPV4 = windows.IPPROTO_IPV4
+	IPPROTO_IPV4 = 0x4 // windows.IPPROTO_IPV4 (missing)
 	IPPROTO_IPV6 = windows.IPPROTO_IPV6
 	IPPROTO_TCP  = windows.IPPROTO_TCP
 	IPPROTO_UDP  = windows.IPPROTO_UDP
