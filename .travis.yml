@@ -1,0 +1,17 @@
+os:
+  - linux
+
+language: go
+
+go:
+    - 1.9.x
+
+script:
+  - make build
+
+cache:
+    directories:
+        - $GOPATH/src/gx
+
+notifications:
+  email: false
