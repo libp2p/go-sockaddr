@@ -115,26 +115,29 @@ func NetAddrToSockaddr(addr net.Addr) Sockaddr {
 // IPAndZoneToSockaddr converts a net.IP (with optional IPv6 Zone) to a Sockaddr
 // Returns nil if conversion fails.
 func IPAndZoneToSockaddr(ip net.IP, zone string) Sockaddr {
-	if zone != "" {
-		var buf [16]byte
-		copy(buf[:], ip.To16())
-		return &SockaddrInet6{Addr: buf, ZoneId: uint32(IP6ZoneToInt(zone))}
+	// Unspecified?
+	if ip == nil {
+		if zone != "" {
+			return &SockaddrInet6{ZoneId: uint32(IP6ZoneToInt(zone))}
+		}
+		return new(SockaddrInet4)
 	}
-	if ip4 := ip.To4(); ip4 != nil {
+
+	// Valid IPv4?
+	if ip4 := ip.To4(); ip4 != nil && zone == "" {
 		var buf [4]byte
 		copy(buf[:], ip4) // last 4 bytes
 		return &SockaddrInet4{Addr: buf}
 	}
+
+	// Valid IPv6 address?
 	if ip6 := ip.To16(); ip6 != nil {
 		var buf [16]byte
 		copy(buf[:], ip6)
 		return &SockaddrInet6{Addr: buf, ZoneId: uint32(IP6ZoneToInt(zone))}
 	}
-	if len(ip) == 0 {
-		buf := [4]byte{0, 0, 0, 0}
-		return &SockaddrInet4{Addr: buf}
-	}
-	panic("invalid IP address")
+
+	return nil
 }
 
 // IPAddrToSockaddr converts a net.IPAddr to a Sockaddr.
