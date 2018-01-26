@@ -23,8 +23,8 @@ const (
 	SOCK_SEQPACKET = unix.SOCK_SEQPACKET
 )
 
-type Sockaddr = unix.Sockaddr
-type SockaddrInet4 = unix.SockaddrInet4
-type SockaddrInet6 = unix.SockaddrInet6
-type SockaddrUnix = unix.SockaddrUnix
-type RawSockaddrAny = unix.RawSockaddrAny
+type Sockaddr unix.Sockaddr
+type SockaddrInet4 unix.SockaddrInet4
+type SockaddrInet6 unix.SockaddrInet6
+type SockaddrUnix unix.SockaddrUnix
+type RawSockaddrAny unix.RawSockaddrAny
