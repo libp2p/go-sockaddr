@@ -1,3 +1,7 @@
+# DEPRECATION NOTICE
+
+This repository is not maintained any longer.
+
 ## go-sockaddr - `{Raw,}Sockaddr` conversions
 
 See https://groups.google.com/d/msg/golang-nuts/B-meiFfkmH0/-TxP1r6zvk8J

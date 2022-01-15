@@ -1,4 +1,5 @@
-// package sockaddrnet provides conversions between net.Addr and Sockaddr
+// Package sockaddrnet provides conversions between net.Addr and Sockaddr
+// Deprecated: This package is not maintained any longer.
 package sockaddrnet
 
 import (
