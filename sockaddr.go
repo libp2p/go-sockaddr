@@ -1,3 +1,4 @@
+// Deprecated: This package is not maintained any longer.
 package sockaddr
 
 import (
